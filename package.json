@@ -8,9 +8,11 @@
   "scripts": {
     "start": "node tools/serve.mjs",
     "build": "node tools/build-deploy.mjs",
-    "preview": "node tools/serve.mjs dist 8001"
+    "preview": "node tools/serve.mjs dist 8001",
+    "video": "node tools/render-video.mjs"
   },
   "devDependencies": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "playwright-core": "^1.65.0"
   }
 }

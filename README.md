@@ -32,6 +32,34 @@ npm run preview
 
 The result is in `dist`, plain static files that any web host can serve, and the preview is at http://localhost:8001. Every script the project wrote is minified with esbuild, and the build adds the pieces that exist only on a deployed site: a small page for each world and journey so that shared links show a preview, a plain page that lists every world with its description, the gallery's record of which worlds are new, and the host's settings file. Each release has a short name, and this one is s8f. Run as `npm run build -- --stamp s8f`, this tree came out identical to the live site, file for file and byte for byte, on November 9, 2026. The site may have grown since.
 
+## Making a video
+
+`tools/render-video.mjs` renders a flight into video files. It needs [ffmpeg](https://ffmpeg.org) (with libx265, libx264, libsvtav1 and libopus) and Google Chrome, plus `npm install` for the library that drives Chrome.
+
+```
+npm install
+npm run video                                   # the journey Grand, in 4K at 60 frames a second
+npm run video -- --journey one-day
+npm run video -- --worlds orbit-dawn,storm-bands,the-umbra
+npm run video -- --count 8 --seed 42            # eight worlds as the picker would choose them
+npm run video -- --size 1280x720 --seconds 20   # a quick test
+npm run video -- --list                         # the journeys
+npm run video -- --help                         # every option
+```
+
+The script draws the site in a headless Chrome one frame at a time, so the video is smooth however slowly the machine draws. Nothing is shown waiting for a world to load either: the script itself waits between frames while the next world builds. The sound is the site's own, made by the same code in an offline audio context that keeps time with the video. The on-screen bar and title cards are left out, and the picture fades in at the start and out into the last portal.
+
+Each run writes four files to `video/`:
+
+| File | What it is |
+|---|---|
+| `<name>-full.mov` | The master: H.265 10-bit at near-lossless quality, at the rendered size and rate, with 24-bit PCM sound. About 1.2 to 1.7 GB a minute at 4K. |
+| `<name>-youtube.mp4` | For upload to YouTube: H.264 High, half-second closed GOPs, BT.709, at most 68 Mbit/s (YouTube's figure for 4K 60), AAC at 384 kbit/s, index at the front, a chapter for each world. |
+| `<name>-min.mp4` | The smallest: AV1 at 720p and 30 frames a second, at most 1.5 Mbit/s, with Opus sound. It plays in browsers and VLC; QuickTime plays it only on Macs with AV1 hardware. |
+| `<name>-chapters.txt` | When each world begins, ready to paste into a YouTube description. |
+
+A 4K render is slow. On an Apple M1 it runs at about 4 frames a second (the graphics card is the limit), so a 10-minute journey takes around two and a half hours. On a Mac the master is encoded by the hardware HEVC encoder. `--encoder software` uses x265 instead, which gives a smaller file but runs about five times slower.
+
 ## Controls
 
 | Key | What it does |
@@ -67,7 +95,7 @@ design         two tables the build reads: each world's text, and the release it
 icons, og.jpg, manifest.webmanifest
                the home-screen install and the picture a shared link shows
 readme         the two screenshots on this page
-tools          the build script and a small local server
+tools          the build script, a small local server, and the video renderer
 ```
 
 ## How it works
@@ -98,7 +126,7 @@ The worlds are uneven, and the agents' own grading says so. Every world carries 
 
 Ethan Mollick described the idea in a paragraph in October 2026 and left the building to Claude; twenty hours later there were 204 worlds on a live website. By the tenth day there was a lead agent that owned the engine and shipped every release, and 28 teams of agents building worlds in parallel. Agents acting as judges scored the worlds, and those scores became the bands above. Before each release the lead agent's tools rendered every new world, and every world whose code had changed, at three points along its flight and checked the frames for errors and broken pixels; a world that failed was left out. Then they played the assembled site at ten times its normal speed before anything went live. Claude's own estimate, not a count, is that about 25,000 agents worked on the project. This README was written by Claude too, and other agents checked it against the code.
 
-The comments in the code are the agents' notes to themselves and to each other, left as they were apart from a few short passages edited for this repository: lines that quoted or pointed at Ethan's messages, a few notes about the agents' own machines and working folders, and the first lines of three files that the release tooling writes. They have a dialect: the lead agent is "the owner" or "the site's owner," the teams are "crews," and a team's own head is its "lead" or "designer." So a line such as "the owner's ruling of 14 Oct" records one agent's note to another. Hundreds of comments also name screenshots, briefs, reviews and tools that aren't here, because this repository holds the site's code and leaves out the project's working files: `tools` keeps only the build script, edited for this repository, and a small local server written for it.
+The comments in the code are the agents' notes to themselves and to each other, left as they were apart from a few short passages edited for this repository: lines that quoted or pointed at Ethan's messages, a few notes about the agents' own machines and working folders, and the first lines of three files that the release tooling writes. They have a dialect: the lead agent is "the owner" or "the site's owner," the teams are "crews," and a team's own head is its "lead" or "designer." So a line such as "the owner's ruling of 14 Oct" records one agent's note to another. Hundreds of comments also name screenshots, briefs, reviews and tools that aren't here, because this repository holds the site's code and leaves out the project's working files: `tools` keeps only the build script, edited for this repository, and a small local server and a video renderer written for it.
 
 ## License and credits
 
